@@ -192,8 +192,8 @@ export const SheetProcessorConfig: SheetProcessorConfigEntry[] = [
         processingClass: "EmployeeSheetProcessor",
         generationClass: "EmployeeSheetGenerator",
         sheetDataMapping: [
-          { inJsonPath: "employees.name", outJsonPath: "name" },
-          { inJsonPath: "employees.department", outJsonPath: "department" }
+          { inJsonPath: "row.name", outJsonPath: "name" },
+          { inJsonPath: "row.department", outJsonPath: "department" }
         ]
       },
       {
@@ -202,8 +202,8 @@ export const SheetProcessorConfig: SheetProcessorConfigEntry[] = [
         processingClass: "DepartmentSheetProcessor",
         generationClass: "DepartmentSheetGenerator",
         sheetDataMapping: [
-          { inJsonPath: "departments.name", outJsonPath: "name" },
-          { inJsonPath: "departments.manager", outJsonPath: "manager" }
+          { inJsonPath: "row.name", outJsonPath: "name" },
+          { inJsonPath: "row.manager", outJsonPath: "manager" }
         ]
       }
     ]
