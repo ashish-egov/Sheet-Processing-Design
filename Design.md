@@ -226,3 +226,37 @@ src/
     
 
 That's it! The system will auto-handle the rest 🧠
+
+
+
+
+
+
+---
+
+### ✅ **What to Change:**
+
+1. **Add `freezeInProcessedFile` (boolean)**  
+   To each item in:
+   - `stringProperties`
+   - `numberProperties`
+   - `enumProperties`
+
+2. **Add `hideColumnInProcessedFile` (boolean)**  
+   To each item in:
+   - `stringProperties`
+   - `numberProperties`
+   - `enumProperties`
+
+---
+
+### 🔍 **What It Will Do:**
+
+- **`freezeInProcessedFile`**  
+  ➤ When set to `true`, this column will be **frozen (locked/pinned)** in the final processed Excel file.  
+  This is useful for key columns like "ID", "Name", etc., so users can scroll while keeping them visible.
+
+- **`hideColumnInProcessedFile`**  
+  ➤ When set to `true`, this column will be **hidden** in the final processed Excel file.  
+  This is useful for internal codes, metadata, or technical fields that end users shouldn't see or edit.
+
