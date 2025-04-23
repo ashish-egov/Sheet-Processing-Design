@@ -1,6 +1,7 @@
 # 🧩 Unified Excel Sheet Management System
 
 ## 🎯 Goal
+
 A single-config driven, extensible system to:
 
 - 📥 Read Excel data  
@@ -207,9 +208,9 @@ src/
 
 ## ✏️ Add a New Template
 
-1. Create `MySheetProcessor.ts`
-2. Export & register in `SheetProcessorFactory.ts`
-3. Add config in `SheetProcessorConfig.ts`
+1. Create `MySheetProcessor.ts`  
+2. Export & register in `SheetProcessorFactory.ts`  
+3. Add config in `SheetProcessorConfig.ts`  
 
 That’s it — plug-and-play ✔️
 
@@ -232,20 +233,31 @@ For each column under `stringProperties`, `numberProperties`, and `enumPropertie
   "columnColorInProcessedFile": {
     "type": "string",
     "pattern": "^#([A-Fa-f0-9]{6})$"
+  },
+  "columnWidthInProcessedFile": {
+    "type": "number",
+    "minimum": 10,
+    "maximum": 500
   }
 }
 ```
 
-### Behavior
+---
+
+### 🧠 Behavior
 
 - `freezeInProcessedFile`:  
   ➤ Keeps the column visible (pinned) while scrolling.  
-  🔒 Good for ID, Name, etc.
+  🔒 Good for columns like IDs or names.
 
 - `hideColumnInProcessedFile`:  
-  ➤ Hides this column in the final processed file.  
-  🔐 Use for technical/internal data.
+  ➤ Hides this column in the final Excel output.  
+  🔐 Useful for internal-only fields.
 
 - `columnColorInProcessedFile`:  
-  ➤ Applies background color in the sheet.  
-  🎨 Accepts hex codes like `#FF0000` (red), `#00FF00` (green).
+  ➤ Applies a background fill to the column.  
+  🎨 Accepts hex format like `#FFDD00`, `#00BFFF`.
+
+- `columnWidthInProcessedFile`:  
+  ➤ Sets column width in Excel.  
+  📏 Typical values range from `20` to `50`.
