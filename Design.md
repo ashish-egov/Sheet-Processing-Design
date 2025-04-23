@@ -1,166 +1,226 @@
 # 🧩 Unified Excel Sheet Management System  
-**Multi-Sheet | Config-Driven | Interface-Based | Excel ↔ JSON ↔ Excel**
+**Multi-Sheet Support | Interface-Driven | Config-Based | Excel ↔ JSON ↔ Excel**
 
 ---
 
-## 🎯 Goal
-Build a powerful and flexible system that can:
+## 🎯 Objective
 
-- ✅ Read Excel files with multiple sheets and convert them to structured JSON.
-- 🔁 Process that data with custom logic for each sheet.
-- 📄 Generate Excel files **from scratch** based on just config.
-- 🔌 Use pluggable classes for logic (easy to extend).
-- 🎨 Style and control sheet layout via config flags.
+To build a configurable and extensible Excel sheet system that can:
+
+✅ Parse multi-sheet Excel files into structured JavaScript objects  
+🔁 Process data using per-sheet transformation/validation logic  
+📄 Generate Excel files from scratch, using only config (no pre-existing Excel)  
+🧠 Use interface-driven logic for reusable, plug-and-play sheet processors  
+🎨 Control visibility, layout, and styling using flags from a config (MDMS)  
 
 ---
 
-## 🧠 How It Works — Two Main Flows
+## 🧠 Core Architecture
 
-### 1️⃣ Process Flow (Excel ➡ JSON ➡ Processed Output)
-
-- You give an **input Excel file**.
-- System uses **per-sheet processors** (via config).
-- Each processor transforms or validates the sheet.
-- Final result is an updated version of the Excel data in `string[][]` format.
-
-```ts
-Input: Excel → Convert to string[][] per sheet → Run logic → Output: Processed string[][]
+```
+                         ┌──────────────────────────────┐
+                         │     SheetProcessorConfig     │
+                         │      (multi-sheet aware)     │
+                         └──────────────┬───────────────┘
+                                        ▼
+                         ┌────────────────────────────────────────┐
+                         │ Process Flow (Excel → JSON → Output)   │
+                         └──────────────┬─────────────────────────┘
+                                        ▼
+                    ┌──────────────────────────────────────┐
+                    │ { sheetName: object[] }              │ ◄─ Parsed Excel
+                    └──────────────────────────────────────┘
+                                        ▼
+                        ┌──────────────────────────────┐
+                        │  ProcessorClass.process()     │
+                        └────────────┬─────────────────┘
+                                     ▼
+                    ┌──────────────────────────────────────────────┐
+                    │ Output: { sheetName: object[] }              │
+                    └──────────────────────────────────────────────┘
 ```
 
 ---
 
-### 2️⃣ Generate Flow (Config ➡ Excel ➡ JSON)
+### (Separate Flow)
 
-- You don’t give any Excel file.
-- System looks up the config and runs **per-sheet generators**.
-- Each generator creates a `string[][]` for that sheet based on rules or default values.
-- Result is a fresh Excel built from scratch.
-
-```ts
-Input: Config + Context → Run Generator → Output: New Excel (as string[][])
+```
+                         ┌────────────────────────────────────────┐
+                         │ Generate Flow (Config → Excel → JSON) │
+                         └──────────────┬─────────────────────────┘
+                                        ▼
+                          ┌─────────────────────────────┐
+                          │ Start with config + context │
+                          └──────────────┬──────────────┘
+                                         ▼
+                          ┌────────────────────────────┐
+                          │ GeneratorClass.generate()  │
+                          └──────────────┬─────────────┘
+                                         ▼
+                        ┌──────────────────────────────────────────────┐
+                        │ Output: { sheetName: object[] }              │
+                        └──────────────────────────────────────────────┘
 ```
 
 ---
 
-## 📦 Top-Level Config
+## 🔧 Top-Level Config
 
 ```ts
-SheetProcessorConfigEntry {
-  templateType: string,        // e.g. "HRBulkUpload"
-  parsingIdentifier?: string,  // Optional ID to detect input file
-  sheets: SheetEntry[]         // Sheet-wise config
+export interface SheetProcessorConfigEntry {
+  templateType: string;             // Unique identifier per template
+  parsingIdentifier?: string;       // Optional fallback to detect input Excel
+  sheets: SheetEntry[];             // Config per sheet/tab
 }
 ```
 
 ---
 
-## 📄 Per Sheet Config
+## 📄 Per-Sheet Config
 
 ```ts
-SheetEntry {
-  sheetName: string,               // Tab name in Excel
-  schemaName: string,              // Validation schema
-  processingClass?: string,        // For processing input Excel
-  generationClass?: string,        // For generating new Excel
-  sheetDataMapping?: SheetDataMapping[]  // Maps raw to output fields
+export interface SheetEntry {
+  sheetName: string;                // Excel tab name
+  schemaName: string;               // JSON schema name for validation
+  processingClass?: string;         // For Process Flow
+  generationClass?: string;         // For Generate Flow
+  sheetDataMapping?: SheetDataMapping[]; // Used only in Process Flow
 }
 ```
 
 ---
 
-## 🔄 Data Mapping (Used During Processing)
+## 🔁 Data Mapping (Processing Only)
 
 ```ts
-SheetDataMapping {
-  inJsonPath: string,    // From raw sheet
-  outJsonPath: string    // Where to place in output
+export interface SheetDataMapping {
+  inJsonPath: string;    // Path in raw sheet object
+  outJsonPath: string;   // Path in output object
 }
 ```
 
 ---
 
-## 🔁 Input & Output Format
-
-Data always flows like this (in both flows):
+## 🔁 Input / Output Format
 
 ```ts
-type SheetDataMap = Record<string, string[][]>; // { sheetName → 2D array }
+type SheetDataMap = Record<string, object[]>; // sheetName -> array of row objects
 ```
 
 ---
 
-## 🧠 Interfaces to Implement
+## 🔧 Interfaces
 
-### 1. 🛠 Sheet Processor
+### 🛠 Sheet Processor
 
 ```ts
-interface SheetProcessorInterface {
-  process(sheetData: SheetDataMap, context: any): Promise<SheetDataMap>;
+export interface SheetProcessorInterface {
+  process(
+    sheetData: SheetDataMap,
+    context: Record<string, any>
+  ): Promise<SheetDataMap>;
 }
 ```
 
-### 2. 🧾 Sheet Generator
+### 🧾 Sheet Generator
 
 ```ts
-interface SheetGeneratorInterface {
-  generate(context: any): Promise<SheetDataMap>;
+export interface SheetGeneratorInterface {
+  generate(
+    context: Record<string, any>
+  ): Promise<SheetDataMap>;
 }
 ```
 
 ---
 
-## ▶️ Run Logic
-
-### ✅ Run Process Flow
+## 🔁 Process Flow Logic
 
 ```ts
-runExcelProcessing(templateType, inputData, context)
-```
+export async function runExcelProcessing(
+  templateType: string,
+  inputData: SheetDataMap,
+  contextData: Record<string, any>
+): Promise<SheetDataMap> {
+  const config = SheetProcessorConfig.find(cfg => cfg.templateType === templateType);
+  if (!config) throw new Error(`No config found for ${templateType}`);
 
-- Finds the config using `templateType`
-- Runs the appropriate `processingClass` for each sheet
-- Returns processed data
+  const result: SheetDataMap = {};
+
+  for (const sheet of config.sheets) {
+    if (!sheet.processingClass) continue;
+    const processor = getSheetProcessor(sheet.processingClass);
+    const sheetInput = { [sheet.sheetName]: inputData[sheet.sheetName] || [] };
+    const output = await processor.process(sheetInput, contextData);
+    result[sheet.sheetName] = output[sheet.sheetName];
+  }
+
+  return result;
+}
+```
 
 ---
 
-### 🆕 Run Generate Flow
+## 📄 Generate Flow Logic
 
 ```ts
-runExcelGeneration(templateType, context)
-```
+export async function runExcelGeneration(
+  templateType: string,
+  contextData: Record<string, any>
+): Promise<SheetDataMap> {
+  const config = SheetProcessorConfig.find(cfg => cfg.templateType === templateType);
+  if (!config) throw new Error(`No config found for ${templateType}`);
 
-- Finds the config using `templateType`
-- Runs the appropriate `generationClass` for each sheet
-- Returns freshly generated sheet data
+  const result: SheetDataMap = {};
+
+  for (const sheet of config.sheets) {
+    if (!sheet.generationClass) continue;
+    const generator = getSheetGenerator(sheet.generationClass);
+    const output = await generator.generate(contextData);
+    result[sheet.sheetName] = output[sheet.sheetName];
+  }
+
+  return result;
+}
+```
 
 ---
 
-## 🧰 Factory Loader (Behind the scenes)
-
-These map class names (as strings) to actual code:
+## 🏭 Factory Loader
 
 ```ts
-const processorRegistry = {
+const processorRegistry: Record<string, new () => SheetProcessorInterface> = {
   EmployeeSheetProcessor,
   DepartmentSheetProcessor,
 };
 
-const generatorRegistry = {
+const generatorRegistry: Record<string, new () => SheetGeneratorInterface> = {
   EmployeeSheetGenerator,
   DepartmentSheetGenerator,
 };
-```
 
-When system sees `processingClass: "EmployeeSheetProcessor"`, it uses this registry to load the class and call its methods.
+function getSheetProcessor(className: string): SheetProcessorInterface {
+  const Cls = processorRegistry[className];
+  if (!Cls) throw new Error(`Processor not found: ${className}`);
+  return new Cls();
+}
+
+function getSheetGenerator(className: string): SheetGeneratorInterface {
+  const Cls = generatorRegistry[className];
+  if (!Cls) throw new Error(`Generator not found: ${className}`);
+  return new Cls();
+}
+```
 
 ---
 
 ## 🧪 Sample Config
 
 ```ts
-const SheetProcessorConfig = [
+export const SheetProcessorConfig: SheetProcessorConfigEntry[] = [
   {
     templateType: "HRBulkUpload",
+    parsingIdentifier: "hr-bulk",
     sheets: [
       {
         sheetName: "Employees",
@@ -169,7 +229,7 @@ const SheetProcessorConfig = [
         generationClass: "EmployeeSheetGenerator",
         sheetDataMapping: [
           { inJsonPath: "employees.name", outJsonPath: "name" },
-          { inJsonPath: "employees.department", outJsonPath: "department" },
+          { inJsonPath: "employees.department", outJsonPath: "department" }
         ]
       },
       {
@@ -179,7 +239,7 @@ const SheetProcessorConfig = [
         generationClass: "DepartmentSheetGenerator",
         sheetDataMapping: [
           { inJsonPath: "departments.name", outJsonPath: "name" },
-          { inJsonPath: "departments.manager", outJsonPath: "manager" },
+          { inJsonPath: "departments.manager", outJsonPath: "manager" }
         ]
       }
     ]
@@ -189,18 +249,9 @@ const SheetProcessorConfig = [
 
 ---
 
-## 🎨 Styling Flags (from MDMS)
+## 🎨 MDMS Styling & Layout Flags
 
-You can add these flags to any column in your config:
-
-| Flag                      | Where Used         | What It Does |
-|---------------------------|--------------------|---------------------------|
-| `freezeInProcessedFile`   | Processed Only     | Freezes column |
-| `hideColumnInProcessedFile` | Processed Only  | Hides column |
-| `columnColorInProcessedFile` | Processed Only | Sets background color |
-| `columnWidth`             | Both Flows         | Sets column width |
-
-### Example Column Definition:
+These flags control how columns appear or behave in **processed Excel files** (some apply to generated files too).
 
 ```json
 {
@@ -208,7 +259,14 @@ You can add these flags to any column in your config:
   "jsonPath": "employee.id",
   "freezeInProcessedFile": true,
   "hideColumnInProcessedFile": false,
-  "columnColorInProcessedFile": "#CCE5FF",
+  "color": "#CCE5FF",
   "columnWidth": 120
 }
 ```
+
+| Flag                    | Used In       | Description                                                        |
+|-------------------------|---------------|--------------------------------------------------------------------|
+| `freezeInProcessedFile` | Processed Only| Freezes the column for horizontal scrolling                        |
+| `hideColumnInProcessedFile` | Processed Only| Excludes column from visible output in processed Excel             |
+| `color`                 | Processed Only| Sets cell background color (for emphasis or style)                |
+| `columnWidth`           | Both Flows    | Sets column width in both generated and processed Excel files      |
