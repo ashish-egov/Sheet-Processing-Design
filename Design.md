@@ -1,116 +1,115 @@
-# 🧩 Unified Excel Sheet Management System  
-### (Multi-Sheet Support | Interface-Driven | Config-Based | Excel ↔ JSON ↔ Excel)
+# 🧩 Unified Excel Sheet Management System
+
+**(Multi-Sheet Support | Interface-Driven | Config-Based | Excel ↔ JSON ↔ Excel)**
 
 ---
 
 ## 🎯 Objective
 
-Design a configurable and extensible Excel sheet management system with the following capabilities:
+To build a **configurable** and **extensible** Excel sheet system that can:
 
-- 🧾 Parsing multi-sheet Excel files into structured JS objects
-- 🔁 Processing data based on sheet-level configurations
-- 📄 Generating Excel sheets purely from configurations, **without starting from Excel**
-- 🧠 Using interface-driven transformation and validation logic for data processing
-- 🧱 Supporting flags for controlling the structure, visibility, and styling of Excel sheets
+- ✅ Parse multi-sheet Excel files into structured JavaScript objects
+- 🔁 Process data using per-sheet transformation/validation logic
+- 📄 Generate Excel files **from scratch**, using only config (no pre-existing Excel)
+- 🧠 Use **interface-driven** logic for reusable, plug-and-play sheet processors
+- 🎨 Control **visibility, layout, and styling** using flags from a config (MDMS)
 
 ---
 
 ## 🧠 Core Architecture
 
 ```
-┌──────────────────────────────┐
-│     SheetProcessorConfig     │
-│      (multi-sheet aware)     │
-└──────────────┬───────────────┘
-               ▼
-       ┌────────────────────────────────────────┐
-       │ Process Flow (multi-sheet, Excel → JS) │
-       └──────────────┬────────────────────────┘
-                      ▼
-          ┌──────────────────────────────┐
-          │ { sheetName: string[][] }    │ ◄──── Excel parsed into object
-          └──────────────┬──────────────┘
-                         ▼
-            ┌────────────────────────────┐
-            │ ProcessorClass.process()  │
-            └────────────┬──────────────┘
-                         ▼
-            ┌───────────────────────────────────────────────┐
-            │ Output: { sheetName: string[][] } (processed) │
-            └───────────────────────────────────────────────┘
-                     
-           (Separate Flow)
-               
-       ┌────────────────────────────────────────┐
-       │ Generate Flow (config → Excel → JS) │
-       └──────────────┬────────────────────────┘
-                      ▼
-            ┌────────────────────────────┐
-            │ Start with config + context │
-            └──────────────┬──────────────┘
-                         ▼
-            ┌────────────────────────────┐
-            │ GeneratorClass.generate()  │
-            └────────────┬──────────────┘
-                         ▼
-            ┌───────────────────────────────────────────────┐
-            │ Output: { sheetName: string[][] } (generated) │
-            └───────────────────────────────────────────────┘
+                         ┌──────────────────────────────┐
+                         │     SheetProcessorConfig     │
+                         │      (multi-sheet aware)     │
+                         └──────────────┬───────────────┘
+                                        ▼
+                         ┌────────────────────────────────────────┐
+                         │ Process Flow (Excel → JSON → Output)   │
+                         └──────────────┬─────────────────────────┘
+                                        ▼
+                    ┌──────────────────────────────────────┐
+                    │   { sheetName: string[][] }          │ ◄─ Parsed Excel
+                    └──────────────────────────────────────┘
+                                        ▼
+                        ┌──────────────────────────────┐
+                        │  ProcessorClass.process()     │
+                        └────────────┬─────────────────┘
+                                     ▼
+                    ┌──────────────────────────────────────────────┐
+                    │ Output: { sheetName: string[][] }            │
+                    └──────────────────────────────────────────────┘
+
+
+(Separate Flow)
+
+
+                         ┌────────────────────────────────────────┐
+                         │ Generate Flow (Config → Excel → JSON) │
+                         └──────────────┬─────────────────────────┘
+                                        ▼
+                          ┌─────────────────────────────┐
+                          │ Start with config + context │
+                          └──────────────┬──────────────┘
+                                         ▼
+                          ┌────────────────────────────┐
+                          │ GeneratorClass.generate()  │
+                          └──────────────┬─────────────┘
+                                         ▼
+                        ┌──────────────────────────────────────────────┐
+                        │ Output: { sheetName: string[][] }            │
+                        └──────────────────────────────────────────────┘
 ```
 
 ---
 
 ## 🔧 Top-Level Config
 
+### `SheetProcessorConfigEntry`
+
 ```ts
 export interface SheetProcessorConfigEntry {
-  templateType: string;            // Unique identifier per use-case
-  parsingIdentifier: string;       // Optional fallback for file detection
-  sheets: SheetEntry[];            // One entry per sheet to process or generate
+  templateType: string;            // Unique identifier per template
+  parsingIdentifier?: string;      // Optional fallback to detect input Excel
+  sheets: SheetEntry[];            // One config per Excel sheet
 }
 ```
 
 ---
 
-## 📄 Per Sheet Config
+## 📄 Per-Sheet Config
+
+### `SheetEntry`
 
 ```ts
 export interface SheetEntry {
-  sheetName: string;               // Target sheet name
-  schemaName: string;              // JSON schema to validate structure
-  processingClass?: string;        // Class used during PROCESS flow
-  generationClass?: string;        // Class used during GENERATE flow
-  sheetDataMapping?: SheetDataMapping[]; // Used only in PROCESS flow
+  sheetName: string;               // Sheet tab name in Excel
+  schemaName: string;              // JSON schema name to validate this sheet
+  processingClass?: string;        // Processor used in Process Flow
+  generationClass?: string;        // Generator used in Generate Flow
+  sheetDataMapping?: SheetDataMapping[]; // Used only in Process Flow
 }
 ```
 
-### ⚠️ Notes:
-- `processingClass`: Required **only** for the **process flow**.
-- `generationClass`: Required **only** for the **generate flow**.
-- `sheetDataMapping`: Used **only in process flow** for data extraction/transformation. **Ignored during generation**.
-
 ---
 
-## 🔁 Data Mapping (Processing-Only)
+## 🔁 Data Mapping (Processing Only)
 
 ```ts
 export interface SheetDataMapping {
-  inJsonPath: string;
-  outJsonPath: string;
+  inJsonPath: string;   // Input path in raw sheet data
+  outJsonPath: string;  // Transformed output JSON path
 }
 ```
 
-### 📌 Purpose:
-This mapping facilitates extraction or transformation of data from Excel sheets **during process flow only**.
-
 ---
 
-## 🔁 I/O Structure
+## 🔁 Input / Output Format
 
-For both flows, the data exchanged is structured as an object mapping sheet names to 2D arrays of strings:
+For both flows, data exchanged is:
 
 ```ts
-type SheetDataMap = Record<string, string[][]>;
+type SheetDataMap = Record<string, string[][]>; // sheetName -> 2D array
 ```
 
 ---
@@ -122,9 +121,9 @@ type SheetDataMap = Record<string, string[][]>;
 ```ts
 export interface SheetProcessorInterface {
   process(
-    sheetData: SheetDataMap,         // Input from parsed Excel
-    context: Record<string, any>     // External/injected metadata
-  ): Promise<SheetDataMap>;          // Output with same sheet names
+    sheetData: SheetDataMap,
+    context: Record<string, any>
+  ): Promise<SheetDataMap>;
 }
 ```
 
@@ -133,8 +132,8 @@ export interface SheetProcessorInterface {
 ```ts
 export interface SheetGeneratorInterface {
   generate(
-    context: Record<string, any>     // Config + external context
-  ): Promise<SheetDataMap>;          // Returns all generated sheets
+    context: Record<string, any>
+  ): Promise<SheetDataMap>;
 }
 ```
 
@@ -155,7 +154,6 @@ export async function runExcelProcessing(
 
   for (const sheet of config.sheets) {
     if (!sheet.processingClass) continue;
-
     const processor = getSheetProcessor(sheet.processingClass);
     const sheetInput = { [sheet.sheetName]: inputData[sheet.sheetName] || [] };
     const output = await processor.process(sheetInput, contextData);
@@ -168,7 +166,7 @@ export async function runExcelProcessing(
 
 ---
 
-## 🧾 Generate Flow Logic
+## 📄 Generate Flow Logic
 
 ```ts
 export async function runExcelGeneration(
@@ -182,7 +180,6 @@ export async function runExcelGeneration(
 
   for (const sheet of config.sheets) {
     if (!sheet.generationClass) continue;
-
     const generator = getSheetGenerator(sheet.generationClass);
     const output = await generator.generate(contextData);
     result[sheet.sheetName] = output[sheet.sheetName];
@@ -236,14 +233,8 @@ export const SheetProcessorConfig: SheetProcessorConfigEntry[] = [
         processingClass: "EmployeeSheetProcessor",
         generationClass: "EmployeeSheetGenerator",
         sheetDataMapping: [
-          {
-            inJsonPath: "employees.name",
-            outJsonPath: "name"
-          },
-          {
-            inJsonPath: "employees.department",
-            outJsonPath: "department"
-          }
+          { inJsonPath: "employees.name", outJsonPath: "name" },
+          { inJsonPath: "employees.department", outJsonPath: "department" }
         ]
       },
       {
@@ -252,14 +243,8 @@ export const SheetProcessorConfig: SheetProcessorConfigEntry[] = [
         processingClass: "DepartmentSheetProcessor",
         generationClass: "DepartmentSheetGenerator",
         sheetDataMapping: [
-          {
-            inJsonPath: "departments.name",
-            outJsonPath: "name"
-          },
-          {
-            inJsonPath: "departments.manager",
-            outJsonPath: "manager"
-          }
+          { inJsonPath: "departments.name", outJsonPath: "name" },
+          { inJsonPath: "departments.manager", outJsonPath: "manager" }
         ]
       }
     ]
@@ -269,30 +254,40 @@ export const SheetProcessorConfig: SheetProcessorConfigEntry[] = [
 
 ---
 
-## 🧾 MDMS Column Flags (Used for Styling & Layout)
+## 🎨 MDMS Styling & Layout Flags
+
+These flags will be added to the **existing MDMS admin-level column schema** to control **how columns appear or behave** in the Excel files.
 
 ```json
 {
-  "freezeInProcessedFile": { "type": "boolean" },
-  "hideColumnInProcessedFile": { "type": "boolean" },
-  "columnColorInProcessedFile": {
-    "type": "string",
-    "pattern": "^#([A-Fa-f0-9]{6})$"
-  },
-  "columnWidth": {
-    "type": "number",
-    "minimum": 10,
-    "maximum": 500
-  }
+  "freezeInProcessedFile": true,         // ❄️ Freeze column in processed Excel
+  "hideColumnInProcessedFile": true,     // 🙈 Hide column from processed Excel
+  "columnColorInProcessedFile": "#FF5733", // 🎨 Column background color (processed only)
+  "columnWidth": 100                     // 📏 Applies in both generated and processed files
 }
 ```
 
-### 🔍 Flag Behavior Summary
+### 🔍 Flag Usage Summary
 
-| Flag                          | Process Flow | Generate Flow | Description                                   |
-|-------------------------------|--------------|----------------|-----------------------------------------------|
-| `freezeInProcessedFile`       | ✅ Used       | ❌ Ignored      | Freeze columns in post-validation output only |
-| `hideColumnInProcessedFile`   | ✅ Used       | ❌ Ignored      | Column visibility in processed Excel only     |
-| `columnColorInProcessedFile`  | ✅ Used       | ❌ Ignored      | Styling for processed file readability        |
-| `columnWidth`                 | ✅ Used       | ✅ Used         | Applies to both generated and processed files |
+| Flag                         | Used In        | Description                                                                 |
+|------------------------------|----------------|-----------------------------------------------------------------------------|
+| `freezeInProcessedFile`      | Processed Only | Keeps selected columns fixed while scrolling horizontally.                  |
+| `hideColumnInProcessedFile`  | Processed Only | Excludes columns from being visible in the processed Excel.                |
+| `columnColorInProcessedFile` | Processed Only | Adds background color for emphasis or visual clarity.                       |
+| `columnWidth`                | Both Flows     | Controls column width in both generated and processed Excel files.         |
+
+---
+
+### 🧾 Example Column Definition in MDMS
+
+```json
+{
+  "header": "Employee ID",
+  "jsonPath": "employee.id",
+  "freezeInProcessedFile": true,
+  "hideColumnInProcessedFile": false,
+  "columnColorInProcessedFile": "#CCE5FF",
+  "columnWidth": 120
+}
+```
 
