@@ -1,19 +1,15 @@
 # 🧩 Unified Excel Sheet Management System
 
 ## 🎯 Goal
-
 A single-config driven, extensible system to:
 
-1.  **Read** Excel data
-    
-2.  **Transform and validate** it using pluggable logic
-    
-3.  **Recreate Excel sheets** using the processed data
-    
+- 📥 Read Excel data
+- 🔁 Transform and validate it using pluggable logic
+- 📤 Recreate Excel sheets using the processed data
 
 This system replaces separate read/write configurations and transformation logic with a **unified flow**, powered by a common interface and dynamic class resolution.
 
-----------
+---
 
 ## 🏗️ High-Level Architecture
 
@@ -46,19 +42,18 @@ This system replaces separate read/write configurations and transformation logic
               ┌────────────────────┐
               │   Write to Excel   │
               └────────────────────┘
-
 ```
 
-----------
+---
 
-## ⚙️ Config Design: `SheetProcessorConfig`
+## ⚙️ Config Design
 
 ```ts
 export interface SheetProcessorConfigEntry {
   templateType: string;
   sheetName: string;
   schemaName: string;
-  processingClass: string; // Class implementing SheetProcessorInterface
+  processingClass: string;
   validateUsingAjv: boolean;
   parsingIdentifier: string;
   sheetDataMapping: SheetDataMapping[];
@@ -81,15 +76,13 @@ export const SheetProcessorConfig: SheetProcessorConfigEntry[] = [
       { inJsonPath: "$.user.name", outJsonPath: "$.context.userNames" },
       { inJsonPath: "$.user.status", outJsonPath: "$.context.userStatus" }
     ]
-  },
-  // Add more template configs as needed
+  }
 ];
-
 ```
 
-----------
+---
 
-## 🧩 Common Interface: `SheetProcessorInterface`
+## 🧩 Common Interface
 
 ```ts
 export interface SheetProcessorInterface {
@@ -98,12 +91,11 @@ export interface SheetProcessorInterface {
     context: Record<string, any>
   ): Promise<string[][]>;
 }
-
 ```
 
-----------
+---
 
-## 🛠️ Sample Implementation: `UserSheetProcessor.ts`
+## 🛠️ Sample Processor
 
 ```ts
 import { SheetProcessorInterface } from "./SheetProcessorInterface";
@@ -117,17 +109,15 @@ export class UserSheetProcessor implements SheetProcessorInterface {
     });
   }
 }
-
 ```
 
-----------
+---
 
-## 🏭 Processor Resolver: `SheetProcessorFactory.ts`
+## 🏭 Factory
 
 ```ts
-import { SheetProcessorInterface } from "./SheetProcessorInterface";
 import { UserSheetProcessor } from "./UserSheetProcessor";
-import { BoundarySheetProcessor } from "./BoundarySheetProcessor"; // Add other imports
+import { BoundarySheetProcessor } from "./BoundarySheetProcessor";
 
 const processorRegistry: Record<string, new () => SheetProcessorInterface> = {
   UserSheetProcessor,
@@ -139,10 +129,9 @@ export function getSheetProcessor(className: string): SheetProcessorInterface {
   if (!ProcessorClass) throw new Error(`Processor class not found: ${className}`);
   return new ProcessorClass();
 }
-
 ```
 
-----------
+---
 
 ## 🚀 Execution Flow
 
@@ -163,21 +152,23 @@ export async function runExcelProcessing(
 
   return outputData;
 }
-
 ```
 
-----------
+---
 
-## 🧪 Optional Extensions
+## ✅ Optional Extensions
 
-### ✅ Validation Helpers
+### Validation Helpers
 
--   Add `validateRowWithAjv(row, schemaName)` in a utility file.
-    
--   Call this inside `process()` if `config.validateUsingAjv` is true.
-    
+```ts
+// utils/validationHelpers.ts
+export function validateRowWithAjv(row: any, schema: any): boolean {
+  // Use AJV to validate
+  return true;
+}
+```
 
-### 📊 Abstract Base Processor (Optional)
+### Abstract Base Processor
 
 ```ts
 export abstract class BaseSheetProcessor implements SheetProcessorInterface {
@@ -187,14 +178,14 @@ export abstract class BaseSheetProcessor implements SheetProcessorInterface {
   ): Promise<string[][]>;
 
   protected validateWithAjv(row: Record<string, any>, schema: any): boolean {
-    // AJV validation logic
     return true;
   }
 }
-
 ```
 
-### 📁 Directory Structure Suggestion
+---
+
+## 📁 Directory Structure
 
 ```
 src/
@@ -211,52 +202,47 @@ src/
 │   └── runExcelProcessing.ts
 └── utils/
     └── validationHelpers.ts
-
 ```
 
-----------
+---
 
-## 📘 How to Add a New TemplateType
+## ✏️ How to Add a New TemplateType
 
-1.  Implement a class like `MySheetProcessor.ts`
-    
-2.  Export it and add it to the factory registry
-    
-3.  Add a config entry in `SheetProcessorConfig`
-    
+1. Implement a new processor class (`MySheetProcessor.ts`)
+2. Export it and register in `SheetProcessorFactory.ts`
+3. Add config in `SheetProcessorConfig.ts`
 
-That's it! The system will auto-handle the rest 🧠
-
-
-
-
-
+✅ Done! It's now fully supported 🔄
 
 ---
 
-### ✅ **What to Change:**
+## 🆕 Schema Enhancements
 
-1. **Add `freezeInProcessedFile` (boolean)**  
-   To each item in:
-   - `stringProperties`
-   - `numberProperties`
-   - `enumProperties`
+### What to Add:
 
-2. **Add `hideColumnInProcessedFile` (boolean)**  
-   To each item in:
-   - `stringProperties`
-   - `numberProperties`
-   - `enumProperties`
+In the MDMS config JSON schema under `enumProperties`, `numberProperties`, and `stringProperties`, add:
+
+```json
+{
+  "freezeInProcessedFile": {
+    "type": "boolean"
+  },
+  "hideColumnInProcessedFile": {
+    "type": "boolean"
+  }
+}
+```
+
+### What It Will Do:
+
+#### `freezeInProcessedFile`
+
+- **True** ➝ Freeze this column in the final processed Excel.
+- Use case: Key fields like `Name`, `ID` should remain visible while scrolling.
+
+#### `hideColumnInProcessedFile`
+
+- **True** ➝ Hide this column in the final processed Excel.
+- Use case: Internal or technical fields that should not be visible/editable by users.
 
 ---
-
-### 🔍 **What It Will Do:**
-
-- **`freezeInProcessedFile`**  
-  ➤ When set to `true`, this column will be **frozen (locked/pinned)** in the final processed Excel file.  
-  This is useful for key columns like "ID", "Name", etc., so users can scroll while keeping them visible.
-
-- **`hideColumnInProcessedFile`**  
-  ➤ When set to `true`, this column will be **hidden** in the final processed Excel file.  
-  This is useful for internal codes, metadata, or technical fields that end users shouldn't see or edit.
-
