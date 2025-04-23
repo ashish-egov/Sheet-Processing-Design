@@ -1,20 +1,19 @@
 # 🧩 Unified Excel Sheet Management System
 
-## 🎯 Goal
+### 🎯 Goal  
+A single-config driven, extensible system to:  
 
-A single-config driven, extensible system to:
+- 📥 **Read Excel data**  
+- 🔁 **Transform and validate it** using pluggable logic  
+- 📤 **Recreate Excel sheets** using the processed data  
 
-- 📥 Read Excel data
-- 🔁 Transform and validate it using pluggable logic
-- 📤 Recreate Excel sheets using the processed data
-
-> ✅ This system unifies the read/write flow using dynamic class resolution and a common interface.
+✅ This system unifies the read/write flow using dynamic class resolution and a common interface.
 
 ---
 
 ## 🏗️ High-Level Architecture
 
-```plaintext
+```
              ┌────────────────────────┐
              │  SheetProcessorConfig  │
              └────────────┬───────────┘               
@@ -55,7 +54,6 @@ export interface SheetProcessorConfigEntry {
   sheetName: string;
   schemaName: string;
   processingClass: string;
-  validateUsingAjv: boolean;
   parsingIdentifier: string;
   sheetDataMapping: SheetDataMapping[];
 }
@@ -71,7 +69,6 @@ export const SheetProcessorConfig: SheetProcessorConfigEntry[] = [
     sheetName: "UserDetails",
     schemaName: "UserTemplate",
     processingClass: "UserSheetProcessor",
-    validateUsingAjv: true,
     parsingIdentifier: "user-upload",
     sheetDataMapping: [
       { inJsonPath: "$.user.name", outJsonPath: "$.context.userNames" },
@@ -158,30 +155,16 @@ export async function runExcelProcessing(
 
 ---
 
-## ✅ Optional Extensions
-
-### AJV Validation Helpers
+## ✨ Optional Base Class
 
 ```ts
-export function validateRowWithAjv(row: any, schema: any): boolean {
-  return true; // Use AJV logic
-}
-```
+import { SheetProcessorInterface } from "./SheetProcessorInterface";
 
----
-
-### Abstract Base Class (Optional)
-
-```ts
 export abstract class BaseSheetProcessor implements SheetProcessorInterface {
   abstract process(
     rows: Record<string, any>[],
     context: Record<string, any>
   ): Promise<string[][]>;
-
-  protected validateWithAjv(row: Record<string, any>, schema: any): boolean {
-    return true;
-  }
 }
 ```
 
@@ -203,26 +186,24 @@ src/
 ├── service/
 │   └── runExcelProcessing.ts
 └── utils/
-    └── validationHelpers.ts
+    └── validationHelpers.ts (optional for future)
 ```
 
 ---
 
 ## ✏️ Add a New Template
 
-1. Create `MySheetProcessor.ts`
-2. Export & register in `SheetProcessorFactory.ts`
-3. Add config entry in `SheetProcessorConfig.ts`
+1. Create `MySheetProcessor.ts` implementing `SheetProcessorInterface`.
+2. Export and register it in `SheetProcessorFactory.ts`.
+3. Add a new entry in `SheetProcessorConfig.ts`.
 
-> 🎉 That's it — plug-and-play!
+🎉 That’s it — **plug-and-play ready!**
 
 ---
 
 ## 🆕 MDMS Config Enhancements
 
-### JSON Schema Updates
-
-For each column under `stringProperties`, `numberProperties`, and `enumProperties`, extend the schema like this:
+Update your JSON schema definitions for Excel column formatting and behavior with the following additional properties:
 
 ```json
 {
@@ -246,20 +227,20 @@ For each column under `stringProperties`, `numberProperties`, and `enumPropertie
 
 ---
 
-### 🧠 Behavior
+## 🧠 Behavior
 
-- **`freezeInProcessedFile`**
-  - ➤ Keeps the column visible (pinned) while scrolling.
-  - 🔒 Good for columns like IDs or names.
+- **`freezeInProcessedFile`**  
+  ➤ Keeps the column visible (pinned) while scrolling.  
+  🔒 Good for columns like IDs or names.
 
-- **`hideColumnInProcessedFile`**
-  - ➤ Hides this column in the final Excel output.
-  - 🔐 Useful for internal-only fields.
+- **`hideColumnInProcessedFile`**  
+  ➤ Hides this column in the final Excel output.  
+  🔐 Useful for internal-only fields.
 
-- **`columnColorInProcessedFile`**
-  - ➤ Applies a background fill to the column.
-  - 🎨 Accepts hex format like `#FFDD00`, `#00BFFF`.
+- **`columnColorInProcessedFile`**  
+  ➤ Applies a background fill to the column.  
+  🎨 Accepts hex format like `#FFDD00`, `#00BFFF`.
 
-- **`columnWidth`**
-  - ➤ Sets column width in Excel.
-  - 📏 Typical values range from 20 to 50, max is 500.
+- **`columnWidth`**  
+  ➤ Sets column width in Excel.  
+  📏 Range: 10–500 (typically 20–50).
