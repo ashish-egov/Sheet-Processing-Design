@@ -3,11 +3,11 @@
 ## 🎯 Goal
 A single-config driven, extensible system to:
 
-- 📥 Read Excel data
-- 🔁 Transform and validate it using pluggable logic
-- 📤 Recreate Excel sheets using the processed data
+- 📥 Read Excel data  
+- 🔁 Transform and validate it using pluggable logic  
+- 📤 Recreate Excel sheets using the processed data  
 
-This system replaces separate read/write configurations and transformation logic with a **unified flow**, powered by a common interface and dynamic class resolution.
+This system unifies the read/write flow using dynamic class resolution and a common interface.
 
 ---
 
@@ -113,9 +113,10 @@ export class UserSheetProcessor implements SheetProcessorInterface {
 
 ---
 
-## 🏭 Factory
+## 🏭 Processor Factory
 
 ```ts
+import { SheetProcessorInterface } from "./SheetProcessorInterface";
 import { UserSheetProcessor } from "./UserSheetProcessor";
 import { BoundarySheetProcessor } from "./BoundarySheetProcessor";
 
@@ -158,17 +159,15 @@ export async function runExcelProcessing(
 
 ## ✅ Optional Extensions
 
-### Validation Helpers
+### AJV Validation Helpers
 
 ```ts
-// utils/validationHelpers.ts
 export function validateRowWithAjv(row: any, schema: any): boolean {
-  // Use AJV to validate
-  return true;
+  return true; // Use AJV logic
 }
 ```
 
-### Abstract Base Processor
+### Abstract Base Class (Optional)
 
 ```ts
 export abstract class BaseSheetProcessor implements SheetProcessorInterface {
@@ -206,21 +205,21 @@ src/
 
 ---
 
-## ✏️ How to Add a New TemplateType
+## ✏️ Add a New Template
 
-1. Implement a new processor class (`MySheetProcessor.ts`)
-2. Export it and register in `SheetProcessorFactory.ts`
+1. Create `MySheetProcessor.ts`
+2. Export & register in `SheetProcessorFactory.ts`
 3. Add config in `SheetProcessorConfig.ts`
 
-✅ Done! It's now fully supported 🔄
+That’s it — plug-and-play ✔️
 
 ---
 
-## 🆕 Schema Enhancements
+## 🆕 MDMS Config Enhancements
 
-### What to Add:
+### JSON Schema Updates
 
-In the MDMS config JSON schema under `enumProperties`, `numberProperties`, and `stringProperties`, add:
+For each column under `stringProperties`, `numberProperties`, and `enumProperties`, extend the schema like this:
 
 ```json
 {
@@ -229,20 +228,24 @@ In the MDMS config JSON schema under `enumProperties`, `numberProperties`, and `
   },
   "hideColumnInProcessedFile": {
     "type": "boolean"
+  },
+  "columnColorInProcessedFile": {
+    "type": "string",
+    "pattern": "^#([A-Fa-f0-9]{6})$"
   }
 }
 ```
 
-### What It Will Do:
+### Behavior
 
-#### `freezeInProcessedFile`
+- `freezeInProcessedFile`:  
+  ➤ Keeps the column visible (pinned) while scrolling.  
+  🔒 Good for ID, Name, etc.
 
-- **True** ➝ Freeze this column in the final processed Excel.
-- Use case: Key fields like `Name`, `ID` should remain visible while scrolling.
+- `hideColumnInProcessedFile`:  
+  ➤ Hides this column in the final processed file.  
+  🔐 Use for technical/internal data.
 
-#### `hideColumnInProcessedFile`
-
-- **True** ➝ Hide this column in the final processed Excel.
-- Use case: Internal or technical fields that should not be visible/editable by users.
-
----
+- `columnColorInProcessedFile`:  
+  ➤ Applies background color in the sheet.  
+  🎨 Accepts hex codes like `#FF0000` (red), `#00FF00` (green).
