@@ -1,98 +1,53 @@
-# 🧩 Unified Excel Sheet Management System  
-**Multi-Sheet Support | Interface-Driven | Config-Based | Excel ↔ JSON ↔ Excel**
+## 🧩 Unified Excel Sheet Management System
+### Multi-Sheet Support | Interface-Driven | Config-Based | Excel ↔ JSON ↔ Excel
+
+### 🎯 Objective
+Build a configurable system for processing and generating Excel sheets, supporting:
+- Multi-sheet Excel parsing
+- Data transformation/validation
+- Excel generation from config
+- Interface-driven logic for reusable sheet processors
+- Flexible control over layout and styling via flags in config
 
 ---
 
-## 🎯 Objective
+### 🧠 Core Architecture Overview
 
-To build a configurable and extensible Excel sheet system that can:
+1. **Top-Level Config**:
+    - **SheetProcessorConfigEntry**: Describes how to process each template type (e.g., "HRBulkUpload").
+    - **Per-Sheet Config**: For each sheet/tab in the template, provides processing and generation logic, data mapping, and flags.
 
-✅ Parse multi-sheet Excel files into structured JavaScript objects  
-🔁 Process data using per-sheet transformation/validation logic  
-📄 Generate Excel files from scratch, using only config (no pre-existing Excel)  
-🧠 Use interface-driven logic for reusable, plug-and-play sheet processors  
-🎨 Control visibility, layout, and styling using flags from a config (MDMS)  
+2. **Process Flow** (Excel → JSON → Output):
+    - Parse Excel → Map data → Apply transformations → Generate output.
 
----
-
-## 🧠 Core Architecture
-
-```
-                         ┌──────────────────────────────┐
-                         │     SheetProcessorConfig     │
-                         │      (multi-sheet aware)     │
-                         └──────────────┬───────────────┘
-                                        ▼
-                         ┌────────────────────────────────────────┐
-                         │ Process Flow (Excel → JSON → Output)   │
-                         └──────────────┬─────────────────────────┘
-                                        ▼
-                    ┌──────────────────────────────────────┐
-                    │ { sheetName: object[] }              │ ◄─ Parsed Excel
-                    └──────────────────────────────────────┘
-                                        ▼
-                        ┌──────────────────────────────┐
-                        │  ProcessorClass.process()     │
-                        └────────────┬─────────────────┘
-                                     ▼
-                    ┌──────────────────────────────────────────────┐
-                    │ Output: { sheetName: object[] }              │
-                    └──────────────────────────────────────────────┘
-```
+3. **Generate Flow** (Config → Excel → JSON):
+    - Use config to generate Excel from scratch → Map data → Output in structured format.
 
 ---
 
-### (Separate Flow)
+### 🔧 Key Config Structures
 
-```
-                         ┌────────────────────────────────────────┐
-                         │ Generate Flow (Config → Excel → JSON) │
-                         └──────────────┬─────────────────────────┘
-                                        ▼
-                          ┌─────────────────────────────┐
-                          │ Start with config + context │
-                          └──────────────┬──────────────┘
-                                         ▼
-                          ┌────────────────────────────┐
-                          │ GeneratorClass.generate()  │
-                          └──────────────┬─────────────┘
-                                         ▼
-                        ┌──────────────────────────────────────────────┐
-                        │ Output: { sheetName: object[] }              │
-                        └──────────────────────────────────────────────┘
-```
-
----
-
-## 🔧 Top-Level Config
-
-```ts
+#### **Top-Level Config**
+```typescript
 export interface SheetProcessorConfigEntry {
-  templateType: string;             // Unique identifier per template
-  parsingIdentifier?: string;       // Optional fallback to detect input Excel
-  sheets: SheetEntry[];             // Config per sheet/tab
+  templateType: string;             // Template identifier
+  sheets: SheetEntry[];             // List of sheets configuration
 }
 ```
 
----
-
-## 📄 Per-Sheet Config
-
-```ts
+#### **Per-Sheet Config**
+```typescript
 export interface SheetEntry {
   sheetName: string;                // Excel tab name
   schemaName: string;               // JSON schema name for validation
   processingClass?: string;         // For Process Flow
   generationClass?: string;         // For Generate Flow
-  sheetDataMapping?: SheetDataMapping[]; // Used only in Process Flow
+  sheetDataMapping?: SheetDataMapping[]; // Data mapping for Process Flow
 }
 ```
 
----
-
-## 🔁 Data Mapping (Processing Only)
-
-```ts
+#### **Data Mapping (For Processing)**
+```typescript
 export interface SheetDataMapping {
   inJsonPath: string;    // Path in raw sheet object
   outJsonPath: string;   // Path in output object
@@ -101,42 +56,17 @@ export interface SheetDataMapping {
 
 ---
 
-## 🔁 Input / Output Format
-
-```ts
+### 🔁 Input / Output Format
+```typescript
 type SheetDataMap = Record<string, object[]>; // sheetName -> array of row objects
 ```
 
 ---
 
-## 🔧 Interfaces
+### 🧠 Flow Logic: **Process Flow** (Excel → JSON → Output)
+**Goal**: Convert Excel data into structured JSON objects, applying transformation/validation.
 
-### 🛠 Sheet Processor
-
-```ts
-export interface SheetProcessorInterface {
-  process(
-    sheetData: SheetDataMap,
-    context: Record<string, any>
-  ): Promise<SheetDataMap>;
-}
-```
-
-### 🧾 Sheet Generator
-
-```ts
-export interface SheetGeneratorInterface {
-  generate(
-    context: Record<string, any>
-  ): Promise<SheetDataMap>;
-}
-```
-
----
-
-## 🔁 Process Flow Logic
-
-```ts
+```typescript
 export async function runExcelProcessing(
   templateType: string,
   inputData: SheetDataMap,
@@ -159,11 +89,18 @@ export async function runExcelProcessing(
 }
 ```
 
+#### **Flow Breakdown**:
+1. **Fetch Config**: Get the configuration based on `templateType`.
+2. **Loop through Sheets**: For each sheet in the config, apply the processing class.
+3. **Processing Logic**: Use the `SheetProcessorInterface` to transform data.
+4. **Return Processed Data**: Combine the results from each sheet into the final output.
+
 ---
 
-## 📄 Generate Flow Logic
+### 🧠 Flow Logic: **Generate Flow** (Config → Excel → JSON)
+**Goal**: Generate new Excel files from config-based data mappings.
 
-```ts
+```typescript
 export async function runExcelGeneration(
   templateType: string,
   contextData: Record<string, any>
@@ -184,11 +121,18 @@ export async function runExcelGeneration(
 }
 ```
 
+#### **Flow Breakdown**:
+1. **Fetch Config**: Get the configuration based on `templateType`.
+2. **Loop through Sheets**: For each sheet in the config, apply the generation class.
+3. **Generation Logic**: Use the `SheetGeneratorInterface` to generate data for Excel.
+4. **Return Generated Data**: Return the generated data, formatted per sheet.
+
 ---
 
-## 🏭 Factory Loader
+### 🔧 Factory Loader
+**Goal**: Dynamically load processors and generators based on config.
 
-```ts
+```typescript
 const processorRegistry: Record<string, new () => SheetProcessorInterface> = {
   EmployeeSheetProcessor,
   DepartmentSheetProcessor,
@@ -214,13 +158,33 @@ function getSheetGenerator(className: string): SheetGeneratorInterface {
 
 ---
 
-## 🧪 Sample Config
+### 🎨 MDMS Styling & Layout Flags
+**Goal**: Control how columns appear in processed Excel files.
 
-```ts
+```typescript
+{
+  "header": "Employee ID",
+  "jsonPath": "employee.id",
+  "freezeInProcessedFile": true,    // Freeze the column for horizontal scrolling
+  "hideColumnInProcessedFile": false, // Hide column in output
+  "color": "#CCE5FF",               // Set background color
+  "columnWidth": 120                // Set column width
+}
+```
+
+**Flags**:
+- `freezeInProcessedFile`: Freezes the column in the processed Excel file.
+- `hideColumnInProcessedFile`: Excludes the column from the visible processed Excel output.
+- `color`: Sets the background color for the cell.
+- `columnWidth`: Sets the column width.
+
+---
+
+### 🧪 Sample Config Example
+```typescript
 export const SheetProcessorConfig: SheetProcessorConfigEntry[] = [
   {
     templateType: "HRBulkUpload",
-    parsingIdentifier: "hr-bulk",
     sheets: [
       {
         sheetName: "Employees",
@@ -246,27 +210,3 @@ export const SheetProcessorConfig: SheetProcessorConfigEntry[] = [
   }
 ];
 ```
-
----
-
-## 🎨 MDMS Styling & Layout Flags
-
-These flags control how columns appear or behave in **processed Excel files** (some apply to generated files too).
-
-```json
-{
-  "header": "Employee ID",
-  "jsonPath": "employee.id",
-  "freezeInProcessedFile": true,
-  "hideColumnInProcessedFile": false,
-  "color": "#CCE5FF",
-  "columnWidth": 120
-}
-```
-
-| Flag                    | Used In       | Description                                                        |
-|-------------------------|---------------|--------------------------------------------------------------------|
-| `freezeInProcessedFile` | Processed Only| Freezes the column for horizontal scrolling                        |
-| `hideColumnInProcessedFile` | Processed Only| Excludes column from visible output in processed Excel             |
-| `color`                 | Processed Only| Sets cell background color (for emphasis or style)                |
-| `columnWidth`           | Both Flows    | Sets column width in both generated and processed Excel files      |
