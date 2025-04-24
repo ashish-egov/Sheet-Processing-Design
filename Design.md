@@ -1,187 +1,184 @@
-## 🧩 Unified Excel Sheet Management System
-### Multi-Sheet Support | Interface-Driven | Config-Based | Excel ↔ JSON ↔ Excel
-
-### 🎯 Objective
-Build a configurable system for processing and generating Excel sheets, supporting:
-- Multi-sheet Excel parsing
-- Data transformation/validation
-- Excel generation from config
-- Interface-driven logic for reusable sheet processors
-- Flexible control over layout and styling via flags in config
+# 🧩 Unified Excel Sheet Management System  
+**Multi-Sheet | Config-Driven | Interface-Based | Excel ↔ JSON ↔ Excel**
 
 ---
 
-### 🧠 Core Architecture Overview
+## 🎯 What Is It?
 
-1. **Top-Level Config**:
-    - **SheetProcessorConfigEntry**: Describes how to process each template type (e.g., "HRBulkUpload").
-    - **Per-Sheet Config**: For each sheet/tab in the template, provides processing and generation logic, data mapping, and flags.
+A powerful system to:
 
-2. **Process Flow** (Excel → JSON → Output):
-    - Parse Excel → Map data → Apply transformations → Generate output.
-
-3. **Generate Flow** (Config → Excel → JSON):
-    - Use config to generate Excel from scratch → Map data → Output in structured format.
+- ✔️ Read Excel sheets and convert them into structured JSON
+- ✔️ Apply data transformations and validations
+- ✔️ Generate Excel templates based on config
+- ✔️ Support multiple sheets in one Excel file
+- ✔️ Dynamically control formatting/styling with metadata
 
 ---
 
-### 🔧 Key Config Structures
+## 📦 Input & Output Format
 
-#### **Top-Level Config**
-```typescript
-export interface SheetProcessorConfigEntry {
-  templateType: string;             // Template identifier
-  sheets: SheetEntry[];             // List of sheets configuration
+### ✅ `SheetDataMap`
+
+```ts
+type SheetDataMap = Record<string, object[]>;
+```
+
+- Each key is a **sheet name** (e.g., "Employees")
+- The value is an **array of objects**
+- These objects represent **rows in Excel**
+- ✅ **Sometimes**, the **first object** is metadata (not a real row), when it contains:
+  
+```ts
+{ areColumnHeaders: true, ...column formatting info }
+```
+
+---
+
+### 🔍 Column Metadata Object (first row only if `areColumnHeaders: true`)
+
+```ts
+{
+  areColumnHeaders: true,
+  Name: {
+    isLocked: true,
+    orderNumber: -1,
+    color: "#CCE5FF",
+    width: 120,
+    hidden: false
+  },
+  Department: {
+    orderNumber: 0
+  }
 }
 ```
 
-#### **Per-Sheet Config**
-```typescript
-export interface SheetEntry {
-  sheetName: string;                // Excel tab name
-  schemaName: string;               // JSON schema name for validation
-  processingClass?: string;         // For Process Flow
-  generationClass?: string;         // For Generate Flow
-  sheetDataMapping?: SheetDataMapping[]; // Data mapping for Process Flow
+---
+
+### 📤 Example Output SheetDataMap
+
+```ts
+{
+  "Employees": [
+    {
+      areColumnHeaders: true,
+      Name: { isLocked: true, orderNumber: -1, color: "#CCE5FF", width: 120 },
+      Department: { orderNumber: 0 }
+    },
+    { Name: "Alice", Department: "HR" },
+    { Name: "Bob", Department: "IT" }
+  ]
 }
 ```
 
-#### **Data Mapping (For Processing)**
-```typescript
-export interface SheetDataMapping {
-  inJsonPath: string;    // Path in raw sheet object
-  outJsonPath: string;   // Path in output object
+- The first object is only used for formatting the final Excel.
+- The actual data starts from the **second object**.
+
+---
+
+## 🧠 Architecture Overview
+
+### 🔹 Top-Level Config
+
+```ts
+interface SheetProcessorConfigEntry {
+  templateType: string;
+  sheets: SheetEntry[];
+}
+```
+
+### 🔸 Per-Sheet Config
+
+```ts
+interface SheetEntry {
+  sheetName: string;
+  schemaName: string;
+  processingClass?: string;
+  generationClass?: string;
+  sheetDataMapping?: SheetDataMapping[];
+}
+```
+
+### 🔹 Optional Data Mapping
+
+```ts
+interface SheetDataMapping {
+  inJsonPath: string;
+  outJsonPath: string;
 }
 ```
 
 ---
 
-### 🔁 Input / Output Format
-```typescript
-type SheetDataMap = Record<string, object[]>; // sheetName -> array of row objects
-```
+## 🔁 Flow 1: Process Flow (Excel → JSON → Output)
 
----
-
-### 🧠 Flow Logic: **Process Flow** (Excel → JSON → Output)
-**Goal**: Convert Excel data into structured JSON objects, applying transformation/validation.
-
-```typescript
-export async function runExcelProcessing(
+```ts
+async function runExcelProcessing(
   templateType: string,
   inputData: SheetDataMap,
   contextData: Record<string, any>
-): Promise<SheetDataMap> {
-  const config = SheetProcessorConfig.find(cfg => cfg.templateType === templateType);
-  if (!config) throw new Error(`No config found for ${templateType}`);
-
-  const result: SheetDataMap = {};
-
-  for (const sheet of config.sheets) {
-    if (!sheet.processingClass) continue;
-    const processor = getSheetProcessor(sheet.processingClass);
-    const sheetInput = { [sheet.sheetName]: inputData[sheet.sheetName] || [] };
-    const output = await processor.process(sheetInput, contextData);
-    result[sheet.sheetName] = output[sheet.sheetName];
-  }
-
-  return result;
-}
+): Promise<SheetDataMap>
 ```
 
-#### **Flow Breakdown**:
-1. **Fetch Config**: Get the configuration based on `templateType`.
-2. **Loop through Sheets**: For each sheet in the config, apply the processing class.
-3. **Processing Logic**: Use the `SheetProcessorInterface` to transform data.
-4. **Return Processed Data**: Combine the results from each sheet into the final output.
+### ✅ How it works:
+
+1. Find config using `templateType`
+2. Loop through each sheet
+3. Load the `processingClass` dynamically
+4. Call its `.process()` method
+5. Return processed `SheetDataMap`
 
 ---
 
-### 🧠 Flow Logic: **Generate Flow** (Config → Excel → JSON)
-**Goal**: Generate new Excel files from config-based data mappings.
+## 🔁 Flow 2: Generate Flow (Config → Excel → JSON)
 
-```typescript
-export async function runExcelGeneration(
+```ts
+async function runExcelGeneration(
   templateType: string,
   contextData: Record<string, any>
-): Promise<SheetDataMap> {
-  const config = SheetProcessorConfig.find(cfg => cfg.templateType === templateType);
-  if (!config) throw new Error(`No config found for ${templateType}`);
-
-  const result: SheetDataMap = {};
-
-  for (const sheet of config.sheets) {
-    if (!sheet.generationClass) continue;
-    const generator = getSheetGenerator(sheet.generationClass);
-    const output = await generator.generate(contextData);
-    result[sheet.sheetName] = output[sheet.sheetName];
-  }
-
-  return result;
-}
+): Promise<SheetDataMap>
 ```
 
-#### **Flow Breakdown**:
-1. **Fetch Config**: Get the configuration based on `templateType`.
-2. **Loop through Sheets**: For each sheet in the config, apply the generation class.
-3. **Generation Logic**: Use the `SheetGeneratorInterface` to generate data for Excel.
-4. **Return Generated Data**: Return the generated data, formatted per sheet.
+### ✅ How it works:
+
+1. Find config using `templateType`
+2. Loop through each sheet
+3. Load the `generationClass` dynamically
+4. Call its `.generate()` method
+5. Return generated `SheetDataMap`
 
 ---
 
-### 🔧 Factory Loader
-**Goal**: Dynamically load processors and generators based on config.
+## 🏭 Dynamic Class Registry
 
-```typescript
-const processorRegistry: Record<string, new () => SheetProcessorInterface> = {
+```ts
+const processorRegistry = {
   EmployeeSheetProcessor,
   DepartmentSheetProcessor,
 };
 
-const generatorRegistry: Record<string, new () => SheetGeneratorInterface> = {
+const generatorRegistry = {
   EmployeeSheetGenerator,
   DepartmentSheetGenerator,
 };
 
-function getSheetProcessor(className: string): SheetProcessorInterface {
+function getSheetProcessor(className: string) {
   const Cls = processorRegistry[className];
-  if (!Cls) throw new Error(`Processor not found: ${className}`);
+  if (!Cls) throw new Error("Processor not found");
   return new Cls();
 }
 
-function getSheetGenerator(className: string): SheetGeneratorInterface {
+function getSheetGenerator(className: string) {
   const Cls = generatorRegistry[className];
-  if (!Cls) throw new Error(`Generator not found: ${className}`);
+  if (!Cls) throw new Error("Generator not found");
   return new Cls();
 }
 ```
 
 ---
 
-### 🎨 MDMS Styling & Layout Flags
-**Goal**: Control how columns appear in processed Excel files.
+## 🧪 Sample Config
 
-```typescript
-{
-  "header": "Employee ID",
-  "jsonPath": "employee.id",
-  "freezeInProcessedFile": true,    // Freeze the column for horizontal scrolling
-  "hideColumnInProcessedFile": false, // Hide column in output
-  "color": "#CCE5FF",               // Set background color
-  "columnWidth": 120                // Set column width
-}
-```
-
-**Flags**:
-- `freezeInProcessedFile`: Freezes the column in the processed Excel file.
-- `hideColumnInProcessedFile`: Excludes the column from the visible processed Excel output.
-- `color`: Sets the background color for the cell.
-- `columnWidth`: Sets the column width.
-
----
-
-### 🧪 Sample Config Example
-```typescript
+```ts
 export const SheetProcessorConfig: SheetProcessorConfigEntry[] = [
   {
     templateType: "HRBulkUpload",
@@ -195,18 +192,25 @@ export const SheetProcessorConfig: SheetProcessorConfigEntry[] = [
           { inJsonPath: "row.name", outJsonPath: "name" },
           { inJsonPath: "row.department", outJsonPath: "department" }
         ]
-      },
-      {
-        sheetName: "Departments",
-        schemaName: "DepartmentSchema",
-        processingClass: "DepartmentSheetProcessor",
-        generationClass: "DepartmentSheetGenerator",
-        sheetDataMapping: [
-          { inJsonPath: "row.name", outJsonPath: "name" },
-          { inJsonPath: "row.manager", outJsonPath: "manager" }
-        ]
       }
     ]
   }
 ];
+```
+
+---
+
+## 🧰 Helper (Extract Headers + Rows)
+
+```ts
+function extractHeaderAndRows(sheetData: object[]): {
+  columnHeaderMeta?: object;
+  rows: object[];
+} {
+  if (sheetData.length > 0 && (sheetData[0] as any).areColumnHeaders) {
+    const [header, ...rows] = sheetData;
+    return { columnHeaderMeta: header, rows };
+  }
+  return { rows: sheetData };
+}
 ```
