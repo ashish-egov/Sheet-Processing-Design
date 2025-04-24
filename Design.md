@@ -141,7 +141,10 @@ export const SheetProcessorConfig: SheetProcessorConfigEntry[] = [
 - ✅ Used only during Excel **generation**  
 - 📝 Columns in the metadata:
   - Can **override formatting** of existing columns  
-  - Can **add new columns** that weren’t in the data  
+  - Can **add new columns** that weren’t in the data
+ 
+---
 
+## 📊 Unified Excel Sheet Management System – Full Flow Diagram
 
 ![image](https://github.com/user-attachments/assets/ccf5c18d-942d-4074-92b8-8b9c8bff7c78)
