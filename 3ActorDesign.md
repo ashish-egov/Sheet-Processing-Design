@@ -24,7 +24,7 @@ We divide the system into **three actors**:
    - Calls `.generate()` to get a **SheetDataMap**.
 7. Merges all returned SheetDataMaps into a single map.
 8. Fills the previously created Excel file with this data:
-   - Inserts metadata (first row).
+   - Inserts column metadata (for first row override or addition).
    - Applies all styling rules from metadata.
    - Populates actual data rows.
 9. Returns final Excel file to user.
@@ -37,14 +37,12 @@ We divide the system into **three actors**:
    - Reads metadata row (if present) for optional formatting info.
 4. Loads and initializes all required `processingClass` instances for this template.
 5. Passes each sheet’s raw data to the appropriate processor class:
-   - Includes optional metadata/context.
 6. Receives processed SheetDataMap from each processor.
 7. Merges all maps into one.
 8. Updates the original Excel file with:
    - Transformed rows
-   - Validation messages (if any)
    - Optional column formatting
-9. Returns final annotated Excel file + SheetDataMap (JSON) to the user or downstream.
+9. Returns final annotated Excel file to the user or downstream.
 
 ---
 
