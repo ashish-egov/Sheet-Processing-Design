@@ -119,8 +119,8 @@ export const SheetProcessorConfig: SheetProcessorConfigEntry[] = [
   "Employees": [
     {
       areColumnHeaders: true,
-      Name: { isLocked: true, color: "#CCE5FF", width: 120 },
-      Department: { orderNumber: 0 }
+      Name: { isLocked: true, color: "#CCE5FF", width: 120, orderNumber : -2 },
+      Department: { orderNumber: -1 }
     },
     { Name: "Alice", Department: "HR" },
     { Name: "Bob", Department: "IT" }
