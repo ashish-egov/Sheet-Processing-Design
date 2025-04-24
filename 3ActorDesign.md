@@ -14,8 +14,8 @@ Also handles basic template creation and file reading.
 - Creates a blank Excel with:
   - All sheets, placeholder headers, default styles
 - Loads required `generationClass` instances
-- Calls `.generate()` → gets `SheetDataMap`s
-- Merges all sheet maps
+- Calls `.generate()` → gets `SheetDataMap`
+- Merges all in excel
 - Fills Excel:
   - Column metadata (if provided)
   - Sample data rows
@@ -27,8 +27,8 @@ Also handles basic template creation and file reading.
 - Loads config & schema
 - Reads raw data + optional metadata from first row
 - Loads required `processingClass` instances
-- Calls `.process()` → gets validated `SheetDataMap`s
-- Merges all sheet maps
+- Calls `.process()` → gets processed `SheetDataMap`
+- Merges all in excel
 - Updates original Excel (optional):
   - Transformed data
   - Styling or annotations
