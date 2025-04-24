@@ -31,7 +31,7 @@
 - Updates original Excel (optional):
   - Transformed data
   - Styling or annotations
-- Returns final Excel
+- Returns final processed Excel
 
 ---
 
