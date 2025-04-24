@@ -4,7 +4,8 @@
 ---
 
 ### 🧠 1. TemplateManager  
-**Role:** Central coordinator for both generate and process flows.
+**Role:**  Central coordinator for both generate and process flows.
+Also handles basic template creation and file reading.
 
 #### 🔁 Generate Flow:
 - Input: `templateType` (e.g., `"HRBulkUpload"`)
