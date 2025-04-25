@@ -1,1 +1,137 @@
+{
+  "type": "object",
+  "title": "Comprehensive Example Schema",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "required": ["$schema", "title", "campaignType"],
+  "x-unique": ["title", "campaignType"],
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "$schema": {
+      "enum": ["http://json-schema.org/draft-07/schema#"],
+      "type": "string",
+      "default": "http://json-schema.org/draft-07/schema#"
+    },
+    "properties": {
+      "type": "object",
+      "properties": {
+        "enumProperties": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "description"],
+            "properties": {
+              "enum": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "name": { "type": "string" },
+              "prefix": { "type": "string" },
+              "isUnique": { "type": "boolean" },
+              "hideColumn": { "type": "boolean" },
+              "isRequired": { "type": "boolean" },
+              "description": { "type": "string" },
+              "orderNumber": { "type": "integer", "minimum": 1 },
+              "errorMessage": { "type": "string" },
+              "freezeColumn": { "type": "boolean" },
+              "freezeColumnIfFilled": { "type": "boolean" },
+              "color": { "type": "string" },
+              "width": { "type": "number" },
+              "showInProcessed": { "type": "boolean" }
+            },
+            "minProperties": 1
+          },
+          "minItems": 1
+        },
+        "numberProperties": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "description"],
+            "properties": {
+              "name": { "type": "string" },
+              "type": {
+                "enum": ["number"],
+                "type": "string"
+              },
+              "maximum": { "type": "number" },
+              "minimum": { "type": "number" },
+              "isUnique": { "type": "boolean" },
+              "hideColumn": { "type": "boolean" },
+              "isRequired": { "type": "boolean" },
+              "multipleOf": { "type": "number" },
+              "description": { "type": "string" },
+              "orderNumber": { "type": "integer", "minimum": 1 },
+              "errorMessage": { "type": "string" },
+              "freezeColumn": { "type": "boolean" },
+              "exclusiveMaximum": { "type": "boolean" },
+              "exclusiveMinimum": { "type": "boolean" },
+              "freezeColumnIfFilled": { "type": "boolean" },
+              "color": { "type": "string" },
+              "width": { "type": "number" },
+              "showInProcessed": { "type": "boolean" }
+            },
+            "minProperties": 1
+          },
+          "minItems": 1
+        },
+        "stringProperties": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "description"],
+            "properties": {
+              "name": { "type": "string" },
+              "type": {
+                "enum": ["string"],
+                "type": "string"
+              },
+              "pattern": {
+                "type": "string",
+                "format": "regex"
+              },
+              "isUnique": { "type": "boolean" },
+              "maxLength": { "type": "integer", "minimum": 0 },
+              "minLength": { "type": "integer", "minimum": 0 },
+              "hideColumn": { "type": "boolean" },
+              "isRequired": { "type": "boolean" },
+              "description": { "type": "string" },
+              "orderNumber": { "type": "integer", "minimum": 1 },
+              "errorMessage": { "type": "string" },
+              "freezeColumn": { "type": "boolean" },
+              "multiSelectDetails": {
+                "type": "object",
+                "required": ["enum", "maxSelections", "minSelections"],
+                "properties": {
+                  "enum": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  },
+                  "maxSelections": { "type": "number" },
+                  "minSelections": { "type": "number" }
+                }
+              },
+              "freezeColumnIfFilled": { "type": "boolean" },
+              "color": { "type": "string" },
+              "width": { "type": "number" },
+              "showInProcessed": { "type": "boolean" }
+            },
+            "minProperties": 1
+          },
+          "minItems": 1
+        },
+        "additionalProperties": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "campaignType": {
+      "type": "string"
+    }
+  },
+  "description": "A simplified JSON Schema example based on data type.",
+  "additionalProperties": false
+}
 
