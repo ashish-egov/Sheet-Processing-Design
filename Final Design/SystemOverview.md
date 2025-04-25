@@ -68,8 +68,8 @@ export const SheetProcessorConfig: SheetProcessorConfigEntry[] = [
 
 ## 🔗 For Further Details
 
-- 👉 **[TemplateManager.md](https://github.com/ashish-egov/Sheet-Processing-Design/blob/main/TemplateManager.md)**  
-- 👉 **[Generator.md](https://github.com/ashish-egov/Sheet-Processing-Design/blob/main/Generator.md)**  
-- 👉 **[Processor.md](https://github.com/ashish-egov/Sheet-Processing-Design/blob/main/Processor.md)**  
+- 👉 **[TemplateManager.md](https://github.com/ashish-egov/Sheet-Processing-Design/blob/main/Final%20Design/TemplateManager.md)**  
+- 👉 **[Generator.md](https://github.com/ashish-egov/Sheet-Processing-Design/blob/main/Final%20Design/Generator.md)**  
+- 👉 **[Processor.md](https://github.com/ashish-egov/Sheet-Processing-Design/blob/main/Final%20Design/Processor.md)**  
 
 ---
